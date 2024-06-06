@@ -2,9 +2,9 @@ import flet as ft
 
 from custom_controls.buttons.label_placement import LabelPlacement
 
-class IconButtonLabeled(ft.Column):
+class IconLabeled(ft.Column):
     def __init__(self, label: ft.Text,
-                 button: ft.IconButton = None,
+                 icon: ft.Icon = None,
                  label_placement: LabelPlacement = LabelPlacement.BOTTOM,
                  gestured: bool = False,
                  **kwargs,
@@ -13,21 +13,21 @@ class IconButtonLabeled(ft.Column):
 
         self.label_placement = label_placement
         if gestured:
-            self.gesture = ft.GestureDetector(content = button)
-        self.button = button
+            self.gesture = ft.GestureDetector(content = icon)
+        self.icon = icon
         self.label = label
 
         self.alignment = ft.MainAxisAlignment.CENTER
 
-        self.button.padding = ft.Padding(0, 0, 0, 0)
-        self.label.width = self.button.icon_size
+        self.icon.padding = ft.Padding(0, 0, 0, 0)
+        self.label.width = self.icon.size
         self.editable_label = ft.TextField(value=label.value, autofocus=True)
 
         self.label = label
         if gestured:
             button_child = self.gesture
         else:
-            button_child = self.button
+            button_child = self.icon
 
         if self.label_placement == LabelPlacement.TOP:
             self.controls = [self.label, self.editable_label, button_child]
@@ -65,9 +65,3 @@ class IconButtonLabeled(ft.Column):
         self._on_new_label_txt_submit = value
         self.editable_label.on_submit = self.on_new_label_txt_submit
         self.editable_label.on_blur = self.on_new_label_txt_submit
-
-
-
-
-
-

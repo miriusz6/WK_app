@@ -32,11 +32,11 @@ class Explorer(ft.Column):
 
         self.overlay = [self.mouse_menu_exp_elem, self.mouse_menu_exp_bg]
 
-        self.clipboard: DirectoryTreeElement| None = None
+        self.clipboard: list[DirectoryTreeElement] = []
         self.selected: list[DirectoryTreeElement] = []
         self.has_cut = False
-        self.bg_menu_blocked = False
-        self.file_menu_blocked = False
+        self.bg_unreachable = False
+        self.bg_reachable = False
 
 
 
@@ -90,8 +90,9 @@ class Explorer(ft.Column):
         self.refresh()
         self.update()
 
-    def delete_element(self, file: DirectoryTreeElement):
-        self.dir_tree.remove_node(file.name)
+    def delete_elements(self, files: list[DirectoryTreeElement]):
+        for f in files:
+            self.dir_tree.remove_node(f.name)
         self.refresh()
         self.update()
 
@@ -101,45 +102,55 @@ class Explorer(ft.Column):
             self.refresh()
             self.update()
 
-    def cut_element(self, file: DirectoryTreeElement):
-        if self.clipboard is not None:
-            self.clipboard.switch_to_default_mode()
-        self.clipboard = file
-        self.clipboard.switch_to_cut_mode()
+    def cut_elements(self, files: list[DirectoryTreeElement]):
+        if self.clipboard_empty():
+            for f in self.clipboard: f.switch_to_default_mode()
+        for f in files:
+            self.clipboard.append(f)
+            f.switch_to_cut_mode()
         self.mouse_menu_exp_elem.hide()
         self.update()
 
-    def copy_element(self, file: DirectoryTreeElement):
-        if self.clipboard is not None:
-            self.clipboard.switch_to_default_mode()
-        self.clipboard = self.dir_tree.copy_node(file.name)
+    def copy_elements(self, files: list[DirectoryTreeElement]):
+        if not self.clipboard_empty():
+            for f in self.clipboard: f.switch_to_default_mode()
+        for f in files:
+            self.clipboard.append(self.dir_tree.copy_node(f.name))
         self.mouse_menu_exp_elem.hide()
 
     def paste_to_curr_dir(self, _e):
-        if self.clipboard is None:
+        if self.clipboard_empty():
             return
-        if self.clipboard.is_cut:
-            self.dir_tree.remove_node_of_parent(self.clipboard.parent, self.clipboard.name)
-
-        self.clipboard.name = self.make_copy_name(self.dir_tree.current_node, self.clipboard.name)
-        self.dir_tree.insert_node(self.dir_tree.current_node.name,self.clipboard)
-        print("pasted:",self.clipboard.name, " to: ",  self.dir_tree.current_node.name)
-
-        self.clipboard = None
+        #if self.clipboard.is_cut:
+        for f in self.clipboard:
+            if f.parent.name == self.dir_tree.current_node.name:
+                continue
+            new_name = self.make_copy_name(self.dir_tree.current_node, f.name)
+            self.dir_tree.remove_node_of_parent(f.parent, f.name)
+            f.name = new_name
+            self.dir_tree.insert_node(self.dir_tree.current_node.name,f)
+        print("pasted:",self.clipboard, " to: ",  self.dir_tree.current_node.name)
+        self.clipboard = []
         self.mouse_menu_exp_elem.hide()
         self.refresh()
         self.update()
 
-    def paste_elem_to_child_dir(self, file: DirectoryTreeElement):
-        if (self.clipboard is None
-                or  file == self.clipboard
-                or file.file_type != FileTypes.DIRECTORY):
+    def paste_elem_to_child_dir(self, new_parent_file: DirectoryTreeElement):
+        a = self.clipboard_empty()
+        b = new_parent_file in self.clipboard
+        c = new_parent_file.file_type != FileTypes.DIRECTORY
+        if (self.clipboard_empty()
+                or new_parent_file in self.clipboard
+                or new_parent_file.file_type != FileTypes.DIRECTORY):
             return
-        if self.clipboard.is_cut:
-            self.dir_tree.remove_node_of_parent(self.clipboard.parent, self.clipboard.name)
-        self.clipboard.name = self.make_copy_name(file, self.clipboard.name)
-        self.dir_tree.insert_node(file.name,self.clipboard)
-        self.clipboard = None
+        for f in self.clipboard:
+            if f.parent.name == new_parent_file.name:
+                continue
+            new_name = self.make_copy_name(new_parent_file, f.name)
+            self.dir_tree.remove_node_of_parent(f.parent, f.name)
+            f.name = new_name
+            self.dir_tree.insert_node(new_parent_file.name, f)
+        self.clipboard = []
         self.mouse_menu_exp_elem.hide()
         self.refresh()
         self.update()
@@ -162,15 +173,15 @@ class Explorer(ft.Column):
         self.mouse_menu_exp_elem.hide()
 
     def copy_button_clicked(self, e):
-        self.copy_element(self.mouse_menu_exp_elem.data)
+        self.copy_elements(self.selected)
         self.mouse_menu_exp_elem.hide()
 
     def cut_button_clicked(self, e):
-        self.cut_element(self.mouse_menu_exp_elem.data)
+        self.cut_elements(self.selected)
         self.mouse_menu_exp_elem.hide()
 
     def delete_button_clicked(self, e):
-        self.delete_element(self.mouse_menu_exp_elem.data)
+        self.delete_elements(self.selected)
         self.mouse_menu_exp_elem.hide()
 
     def paste_into_button_clicked(self, e):
@@ -192,7 +203,10 @@ class Explorer(ft.Column):
 
     def element_right_clicked(self, e:ft.TapEvent, file:DirectoryTreeElement):
         self.mouse_menu_exp_elem.data = file
-        self.show_mouse_exp_menu(e.global_x, e.global_y)
+        if file.is_selected:
+            self.show_mouse_exp_menu(e.global_x, e.global_y)
+        else:
+            self.unselect_all()
 
     def element_double_clicked(self, _e:ft.TapEvent, file:DirectoryTreeElement):
         self.open_element(file)
@@ -208,37 +222,31 @@ class Explorer(ft.Column):
         pass
 
     def element_dragged_at(self, e:DragTargetEvent, target_file:DirectoryTreeElement):
-        if self.currently_dragged is None:
-            return
         dragged_file = self.currently_dragged
-        if (self.clipboard is not None and
-                self.clipboard.name == dragged_file.name and
-                self.clipboard.depth == dragged_file.depth):
-            self.clipboard = None
-        if target_file.name == dragged_file.name:
+        if dragged_file.name == target_file.name:
             return
-        copy = self.dir_tree.copy_node(dragged_file.name)
-        copy.name = self.make_copy_name(target_file, copy.name)
-        self.dir_tree.insert_node(target_file.name, copy)
+        self.dir_tree.insert_node(target_file.name, dragged_file)
         self.dir_tree.remove_node(dragged_file.name)
         self.refresh()
         self.update()
 
     def element_hovered(self, e:ft.HoverEvent, file:DirectoryTreeElement):
-        self.bg_menu_blocked = True
-        self.file_menu_blocked = False
+        self.bg_unreachable = True
+        self.bg_reachable = False
 
     def element_hover_stopped(self, e:ft.HoverEvent, file:DirectoryTreeElement):
-        self.bg_menu_blocked = False
-        self.file_menu_blocked = True
+        self.bg_unreachable = False
+        self.bg_reachable = True
 
     # Element events end
 
     def background_left_clicked(self, e:ft.TapEvent):
+        if self.bg_unreachable: return
         self.hide_mouse_menus()
         self.unselect_all()
 
     def background_right_clicked(self, e: ft.TapEvent):
+        if self.bg_unreachable: return
         self.show_mouse_exp_bg(e.global_x, e.global_y)
         self.unselect_all()
 
@@ -256,15 +264,14 @@ class Explorer(ft.Column):
         self.controls.append(self.mk_grid())
 
     def mk_file_button(self, file:DirectoryTreeElement):
-
         element = ExplorerElement(file, icon_size=self.icon_size)
         element.on_new_name_submit =  lambda e: self.element_name_changed(file)
         element.gesture.on_double_tap = lambda e: self.element_double_clicked(e, file)
-        element.button_labeled.button.on_click = lambda e: self.element_left_clicked(e, file)
+        element.gesture.on_tap = lambda e: self.element_left_clicked(e, file)
         element.gesture.on_secondary_tap_down = lambda e: self.element_right_clicked(e, file)
         element.draggable.on_drag_start = lambda e: self.element_dragged(e, file)
-        element.button_labeled.gesture.on_enter = lambda e: self.element_hovered(e, file)
-        element.button_labeled.gesture.on_exit = lambda e: self.element_hover_stopped(e, file)
+        element.gesture.on_enter = lambda e: self.element_hovered(e, file)
+        element.gesture.on_exit = lambda e: self.element_hover_stopped(e, file)
         if element.drag_target is not None:
             element.drag_target.on_accept = lambda e: self.element_dragged_at(e, file)
         file.exp_elem = element
@@ -318,13 +325,13 @@ class Explorer(ft.Column):
 
     # Mouse menus manipulation
     def show_mouse_exp_menu(self, x, y):
-        if self.file_menu_blocked:
+        if self.bg_reachable:
             return
         self.mouse_menu_exp_bg.hide()
         self.mouse_menu_exp_elem.show_at(x, y)
 
     def show_mouse_exp_bg(self, x, y):
-        if self.bg_menu_blocked:
+        if self.bg_unreachable:
             return
         self.mouse_menu_exp_elem.hide()
         self.mouse_menu_exp_bg.show_at(x, y)
@@ -344,6 +351,10 @@ class Explorer(ft.Column):
             i += 1
             new_name = curr_name + "(" + str(i) + ")"
         return new_name
+
+    def clipboard_empty(self):
+        return len(self.clipboard) == 0
+
 
 
 
