@@ -1,19 +1,13 @@
-
-from collections.abc import Callable
 import flet as ft
 import flet_core.types
-from pymouse import PyMouse
 import os
 CURR_DIR = os.getcwd()
 
 import utils_mix.utils as utils
 from custom_controls.guarded_text_field import GuardedTextField
-from custom_controls.icon_button_labeled import IconButtonLabeled
 
 #window_name = "counter"
 window_name = "Chrome"
-
-from custom_controls.mouse_menu import MouseMenuExplorerElement
 
 overlay_mouse_menus = []
 
@@ -51,7 +45,7 @@ def main(page: ft.Page):
     # page.add(ft.Icon(name=ft.icons.SMART_BUTTON, size=100))
     # page.add(ft.Icon(name=ft.icons.SMART_BUTTON, size=100))
 
-    from custom_controls.explorer import Explorer
+    from custom_controls.explorer.explorer import Explorer
     explorer = Explorer(utils.CURR_DIR + "/mockup_files")
     #page.add(explorer)
 

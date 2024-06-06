@@ -38,6 +38,7 @@ class MouseMenu(ft.Container):
         self.visible = True
         self.left = x
         self.top = y
+        #self.data = assigned_file
         self.update()
 
     def hide(self):
@@ -49,16 +50,16 @@ class MouseMenu(ft.Container):
         self.visible = False
         self.update()
 
-    def wrap_call_add_parent_data(self,f):
+    def wrap_event_call_add_menu_data(self, f):
         def wrapper(e):
-            e.control.file = self.data
+            #e.control.file = self.data
+            e.data = self.data
             f(e)
             self.hide()
         return wrapper
 class MouseMenuExplorerElement(MouseMenu):
     def __init__(self, **kwargs):
         self.open_button = ft.TextButton("Open")
-        print("HERE IS STYLE!!!", self.open_button.style)
         self.delete_button = ft.TextButton("Delete")
         self.rename_button = ft.TextButton("Rename")
         self.cut_button = ft.TextButton("Cut")
@@ -77,27 +78,31 @@ class MouseMenuExplorerElement(MouseMenu):
                          **kwargs)
         self.visible = False
 
-
     def set_on_open(self, on_open):
-        self.open_button.on_click = self.wrap_call_add_parent_data(on_open)
+        pass
+        self.open_button.on_click = self.wrap_event_call_add_menu_data(on_open)
 
     def set_on_delete(self, on_delete):
-        self.delete_button.on_click = self.wrap_call_add_parent_data( on_delete)
+        self.delete_button.on_click = self.wrap_event_call_add_menu_data(on_delete)
 
-    def set_on_rename(self, on_rename):
-        self.rename_button.on_click = self.wrap_call_add_parent_data(on_rename)
+    def set_on_rename_enable(self, on_rename):
+        self.rename_button.on_click = self.wrap_event_call_add_menu_data(on_rename)
+
+    def set_on_rename_submit(self, on_rename_submit):
+        pass
+        self.rename_button.on_click = self.wrap_event_call_add_menu_data(on_rename_submit)
 
     def set_on_new_folder(self, on_new_folder):
-        self.cut_button.on_click = self.wrap_call_add_parent_data(on_new_folder)
+        self.cut_button.on_click = self.wrap_event_call_add_menu_data(on_new_folder)
 
     def set_on_copy(self, on_copy):
-        self.copy_button.on_click = self.wrap_call_add_parent_data(on_copy)
+        self.copy_button.on_click = self.wrap_event_call_add_menu_data(on_copy)
 
     def set_on_cut(self, on_cut):
-        self.cut_button.on_click = self.wrap_call_add_parent_data(on_cut)
+        self.cut_button.on_click = self.wrap_event_call_add_menu_data(on_cut)
 
     def set_on_paste(self, on_paste):
-        self.paste_button.on_click = self.wrap_call_add_parent_data(on_paste)
+        self.paste_button.on_click = self.wrap_event_call_add_menu_data(on_paste)
 
 class MouseMenuExplorerBackground(MouseMenu):
     def __init__(self, **kwargs):
@@ -111,7 +116,10 @@ class MouseMenuExplorerBackground(MouseMenu):
         self.visible = False
 
     def set_on_new_folder(self, on_new_folder):
-        self.new_folder_button.on_click = self.wrap_call_add_parent_data(on_new_folder)
+        self.new_folder_button.on_click = self.wrap_event_call_add_menu_data(on_new_folder)
 
     def set_on_paste(self, on_paste):
-        self.paste_button.on_click = self.wrap_call_add_parent_data(on_paste)
+        self.paste_button.on_click = self.wrap_event_call_add_menu_data(on_paste)
+
+
+#class MouseMenuEvent(ft.):

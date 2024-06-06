@@ -7,7 +7,7 @@ class FileTypes(Enum):
     DIRECTORY = 2
 
 
-from custom_controls.explorer_element import ExplorerElement
+from custom_controls.explorer.explorer_element import ExplorerElement
 
 class DirectoryTreeElement:
     def __init__(self, name, file_type, path, depth, extension=None, explorer_element:ExplorerElement = None):
@@ -218,9 +218,10 @@ class DirectoryTree:
         parent.add_child(new_child)
         return new_child
 
-    def insert_node(self, new_parent_name, node_to_insert):
+    def insert_node(self, new_parent_name:str, node_to_insert:DirectoryTreeElement):
         if new_parent_name == self.current_node.name:
             self.insert_node_into_parent(self.current_node, node_to_insert)
+            return
         new_parent = self.find_child(new_parent_name)
         if new_parent is None:
             return None
