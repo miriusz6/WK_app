@@ -50,7 +50,8 @@ class ExplorerElement(ft.Column):
             self.controls = [self.draggable]
 
         self.default_color = self.button_labeled.button.icon_color
-        self.cut_color = ft.colors.with_opacity(0.5, ft.colors.PRIMARY)
+        self.cut_color = ft.colors.with_opacity(0.4, ft.colors.PRIMARY)
+        self.selected_color = ft.colors.with_opacity(0.5, ft.colors.PRIMARY)
         self._on_new_name_submit = lambda e: None
 
     @property
@@ -79,10 +80,11 @@ class ExplorerElement(ft.Column):
         self.update()
 
     def selected(self):
-        self.button_labeled.button.icon_color = self.default_color
+        self.button_labeled.button.bgcolor = self.selected_color
         self.update()
 
     def default(self):
         self.button_labeled.button.icon_color = self.default_color
+        self.button_labeled.button.bgcolor = None
         self.update()
 

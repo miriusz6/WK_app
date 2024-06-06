@@ -33,6 +33,7 @@ class Explorer(ft.Column):
         self.overlay = [self.mouse_menu_exp_elem, self.mouse_menu_exp_bg]
 
         self.clipboard: DirectoryTreeElement| None = None
+        self.selected: list[DirectoryTreeElement] = []
         self.has_cut = False
         self.bg_menu_blocked = False
         self.file_menu_blocked = False
@@ -40,9 +41,27 @@ class Explorer(ft.Column):
 
 
 
-        self.refresh()
+        self.init_explorer()
 
     # Element manipulation
+
+    def select_element(self, file: DirectoryTreeElement):
+        file.switch_to_selected_mode()
+        self.selected.append(file)
+        self.update()
+
+    def unselect_element(self, file: DirectoryTreeElement):
+        file.switch_to_default_mode()
+        self.selected.remove(file)
+        self.update()
+
+    def unselect_all(self):
+        for file in self.selected:
+            file.switch_to_default_mode()
+        self.selected = []
+        self.update()
+
+
     def move_to_parent_dir(self, e):
         if self.dir_tree.current_node.parent is not None:
             self.dir_tree.go_to_parent()
@@ -175,8 +194,14 @@ class Explorer(ft.Column):
         self.mouse_menu_exp_elem.data = file
         self.show_mouse_exp_menu(e.global_x, e.global_y)
 
-    def element_left_clicked(self, _e:ft.TapEvent, file:DirectoryTreeElement):
+    def element_double_clicked(self, _e:ft.TapEvent, file:DirectoryTreeElement):
         self.open_element(file)
+
+    def element_left_clicked(self, e:ft.TapEvent, file:DirectoryTreeElement):
+        if file.is_selected:
+            self.unselect_element(file)
+        else:
+            self.select_element(file)
 
     def element_dragged(self, e:DragStartEvent, file:DirectoryTreeElement):
         self.currently_dragged = file
@@ -209,8 +234,23 @@ class Explorer(ft.Column):
 
     # Element events end
 
+    def background_left_clicked(self, e:ft.TapEvent):
+        self.hide_mouse_menus()
+        self.unselect_all()
+
+    def background_right_clicked(self, e: ft.TapEvent):
+        self.show_mouse_exp_bg(e.global_x, e.global_y)
+        self.unselect_all()
+
+
+    def init_explorer(self):
+        self.controls = self.controls[:1]
+        self.update_top_menu_txt()
+        self.controls.append(self.mk_grid())
+
     # Explorer layout
     def refresh(self):
+        self.unselect_all()
         self.controls = self.controls[:1]
         self.update_top_menu_txt()
         self.controls.append(self.mk_grid())
@@ -219,6 +259,7 @@ class Explorer(ft.Column):
 
         element = ExplorerElement(file, icon_size=self.icon_size)
         element.on_new_name_submit =  lambda e: self.element_name_changed(file)
+        element.gesture.on_double_tap = lambda e: self.element_double_clicked(e, file)
         element.button_labeled.button.on_click = lambda e: self.element_left_clicked(e, file)
         element.gesture.on_secondary_tap_down = lambda e: self.element_right_clicked(e, file)
         element.draggable.on_drag_start = lambda e: self.element_dragged(e, file)
@@ -250,11 +291,10 @@ class Explorer(ft.Column):
 
         self.background_gesture = ft.GestureDetector(content=self.grid)
 
-        def on_rigt_click(e:ft.TapEvent):
-            self.show_mouse_exp_bg(e.global_x, e.global_y)
 
-        self.background_gesture.on_secondary_tap_down = on_rigt_click
-        self.background_gesture.on_tap_down = lambda _e: self.hide_mouse_menus()
+
+        self.background_gesture.on_secondary_tap_down = self.background_right_clicked
+        self.background_gesture.on_tap_down = self.background_left_clicked
 
         # self.background_gesture.on_pan_start = self.show_selection_area
         # self.background_gesture.on_pan_end = self.hide_selection_area

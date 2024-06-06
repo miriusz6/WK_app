@@ -6,8 +6,8 @@ CURR_DIR = os.getcwd()
 import utils_mix.utils as utils
 from custom_controls.guarded_text_field import GuardedTextField
 
-#window_name = "counter"
-window_name = "Chrome"
+window_name = "counter"
+#window_name = "Chrome"
 
 overlay_mouse_menus = []
 
@@ -57,9 +57,11 @@ def main(page: ft.Page):
 
 
     #page.theme.primary_color.
-    page.bgcolor = ft.colors.BROWN_900
+    #page.bgcolor = ft.colors.BROWN_900
+    page.theme = ft.Theme(color_scheme_seed='green')
     page.platform = ft.PagePlatform.WINDOWS
-
+    page.theme_mode = ft.ThemeMode.LIGHT
+    print(page.theme)
     # page.add(ft.Text("Hello world", size=20, color=ft.colors.WHITE))
 
 
@@ -109,81 +111,6 @@ def main(page: ft.Page):
     stack.controls = [gesture, selectable]
 
 
-
-    #page.add(stack)
-    # page.add(grid)
-
-    #
-
-
-    # page.overlay.append(ft.Column([
-    #     ft.Row([ft.Text("Nothing")] , expand_loose=True),
-    #     ],
-    #     height=200,
-    # ))
-
-    # img = ft.Image(src="C:/felt_WK_app/blue_square.png",
-    #                          fit=ft.ImageFit.FILL,
-    #                          #repeat=ft.ImageRepeat.REPEAT,
-    #                          #color=ft.colors.BLACK,
-    #                          opacity=0.5,
-    #                          expand=True,
-    #                         #width=100,
-    #                         #height=100,
-    #                          border_radius=ft.border_radius.all(10),
-    #                          #border = None,
-    #                          )
-    #
-    # drag_img = ft.Draggable(
-    #         content = ft.Column([
-    #             ft.Row([
-    #                 img,
-    #                 ],
-    #                 alignment=ft.MainAxisAlignment.CENTER,
-    #             )
-    #         ],
-    #             expand_loose=True,
-    #             alignment=ft.MainAxisAlignment.CENTER,
-    #         ),
-    #         group="KUPA",
-    #         on_drag_start=lambda x: print("DRAG START"),
-    #     )
-    #
-    # drag_img_wrap = ft.Column([
-    #     drag_img,
-    #     ],
-    #     expand_loose=True,
-    #     alignment=ft.MainAxisAlignment.CENTER,
-    # )
-    #
-    # def on_drag_start(_e):
-    #     print("DRAG START")
-    #     #drag_img_wrap.width = 100
-    #     #drag_img_wrap.height = 100
-    #     drag_img_wrap.left = 300
-    #     drag_img_wrap.top = 300
-    #     img.expand = False
-    #     img.width = 300
-    #     img.height = 300
-    #     drag_img.update()
-    #
-    # drag_img.on_drag_start = on_drag_start
-    #
-    # #page.overlay.append(drag_img_wrap)
-    #
-    # page.overlay.append(ft.Row([ft.Draggable(ft.Icon(ft.icons.RULE_FOLDER, size=100),
-    #                        group="KUPA",
-    #                        )],
-    #                            left=200
-    #                            ,top=200
-    #                            )
-    #                            )
-    #
-    # page.add(ft.DragTarget(ft.Icon(ft.icons.RULE_FOLDER, size=100),
-    #                        group="KUPA",
-    #                        on_accept=lambda x: print("KUPA"),
-    #                        on_will_accept=lambda x: print("WILL KUPA"),
-    #                        ))
     #
     page.add(explorer)
 
@@ -193,7 +120,7 @@ def main(page: ft.Page):
 
 
 # poetry run flet run -d -r [script]
-
+#
 class myApp(ft.FletApp):
     def __init__(self):
         # super().__init__(main)
@@ -202,5 +129,7 @@ class myApp(ft.FletApp):
 
 app = ft.app(main)
 
+
+#ft.app(target=main)
 
 
