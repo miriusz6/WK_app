@@ -1,42 +1,14 @@
 import os
+from win32api import GetSystemMetrics
 CURR_DIR = os.getcwd()
+import pyautogui
+import win32gui
+from pymouse import PyMouse
 
-def mk_tree_data(path):
-    #tree_data = mk_tree_data_h(path,psg.TreeData(),"")
-    tree_data = mk_tree_data_h(path,[])
-    #return {"data":tree_data,"headings":['type']}
-    return tree_data
+# def mk_tree_data(path):
+#     tree_data = mk_tree_data_h(path,[])
+#     return tree_data
 
-# def mk_tree_data_h(path,data):
-#     #print(os.isdir(path))
-#     for root , dirs, files in os.walk(path):
-#         for d in dirs:
-#             print("root: ", root)
-#             d_split = os.path.splitext(d)
-#             d_name = d_split[0]
-#             d_ext = d_split[1]
-#             d_key = os.path.join(root,d)
-#             data.append({"path": d_key, "name": [d_name], "type": "dir", "ext": None, "children": None})
-#             # if(root == path):
-#             #     #data.insert("", d_key ,d_name,(d_ext),icon='imgs/folder_32_32_icon.png')
-#             #     data.append({"key":d_key,"values":[d_name]})
-#             # else:
-#             #     #data.insert(root, d_key ,d_name,(d_ext),icon='imgs/folder_32_32_icon.png')
-#             #     data.append({"key":d_key,"values":[d_name]})
-#         for f in files:
-#             f_split = os.path.splitext(f)
-#             f_name = f_split[0]
-#             f_ext = f_split[1]
-#             f_key = os.path.join(root,f)
-#             #print("insering f_key: ", f_key,"with parent root: ", root)
-#             data.append({"path": f_key, "name": [f_name], "type": "file", "ext": [f_ext], "children": None})
-#             # if(root == path):
-#             #     #data.insert("", f_key ,f_name,(f_ext),icon=get_file_icon(f_ext))
-#             #     data.append({"path":f_key,"name":[f_name], "ext":[f_ext], "children":None})
-#             # else:
-#             #     #data.insert(root, f_key ,f_name,(f_ext),icon=get_file_icon(f_ext))
-#             #     data.append({"key":f_key,"values":[f_name]})
-#     return data
 
 
 def mk_tree_data_h(root_path):
@@ -57,7 +29,7 @@ def mk_tree_data_h(root_path):
 
 
 def get_window_info(name):
-    import pyautogui
+
     chrome = None
     # for x in pyautogui.getAllWindows():
     #     print(x.title)
@@ -68,7 +40,7 @@ def get_window_info(name):
         # print(x.position)
     #rint(type(chrome))
 
-    import win32gui
+
 
     handle = win32gui.FindWindow(None, chrome)
     #print(handle)
@@ -77,7 +49,7 @@ def get_window_info(name):
     #print(win32gui.GetWindowRect(handle))
     return win32gui.GetWindowRect(handle)
 
-from win32api import GetSystemMetrics
+
 
 
 
@@ -126,7 +98,6 @@ def calc_click_pos(page_width,page_height,window_name):
     width_padding = window_width - page_width
     height_padding = window_height - page_height
 
-    from pymouse import PyMouse
 
     mouse = PyMouse()
     mouse_pos = mouse.position()

@@ -2,7 +2,7 @@ import flet as ft
 from custom_controls.buttons.icon_labeled import IconLabeled
 from custom_controls.buttons.label_placement import LabelPlacement
 from utils_mix.DirectoryTree import FileTypes
-
+from custom_controls.buttons.text_highlightable import TextHighlightable
 from typing import Callable
 class ExplorerElement(ft.Column):
     def __init__(self,file, icon_size=50, **kwargs):
@@ -20,7 +20,7 @@ class ExplorerElement(ft.Column):
             icon_name = ft.icons.AUDIO_FILE
             name = name + file.extension
 
-        self.label = ft.Text(name, text_align=ft.TextAlign.CENTER)
+        self.label = TextHighlightable(value= name, text_align=ft.TextAlign.CENTER)
         self.icon_labeled = IconLabeled(label=self.label,
                                         icon=ft.Icon(icon_name, size=icon_size),
                                         label_placement=LabelPlacement.BOTTOM)
@@ -98,3 +98,14 @@ class ExplorerElement(ft.Column):
         self.card.color = self.default_color
         self.update()
 
+    def highlight_name(self):
+        self.label.highlight_all()
+        self.update()
+
+    def unhighlight_name(self):
+        self.label.unhighlight_all()
+        self.update()
+
+    def highlight_name_fraze(self, fraze:str, case_sensitive=False):
+        self.label.highlight(fraze, case_sensitive)
+        self.update()

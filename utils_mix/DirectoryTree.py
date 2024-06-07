@@ -1,5 +1,5 @@
 import os
-
+import re
 from enum import Enum
 
 class FileTypes(Enum):
@@ -14,6 +14,7 @@ class DirectoryTreeElement:
         self.name = name
         self.children = []
         self.parent = None
+        self.data = {}
         self.type = FileTypes.DIRECTORY
         self.extension = extension
         self.file_type = file_type
@@ -87,19 +88,30 @@ class DirectoryTreeElement:
 
 
 class DirectoryTree:
-    def __init__(self, path_to_root):
+    def __init__(self, path_to_root=None, root_file:DirectoryTreeElement = None):
+        if path_to_root is  None:
+            self.root = root_file
+            self.current_node = self.root
+            self.root.depth = 0
+            self.root.parent = None
+            return
         self.__populate_tree(path_to_root)
         self.current_node = self.root
 
     def __populate_tree(self, root_path):
+        r_p = os.path.split(root_path)[-1]
+        print("SPLITTED:",r_p)
+
         self.root = DirectoryTreeElement(
-            name=root_path.split('/')[-1],
+            #name=root_path.split('/')[-1],
+            name= r_p,
             file_type=FileTypes.DIRECTORY,
             path=root_path,
             depth=0)
         self.__populate_node(self.root)
 
     def __populate_node(self, root_node):
+        #print("populating:", root_node.path)
         root_node.children = self.__make_children(root_node.path, root_node)
         for child in root_node.children:
             child.parent = root_node
@@ -191,14 +203,15 @@ class DirectoryTree:
                                     depth=child.depth)
         return child,copy
 
+    def copy_node_of_parent(self,parent, c_name):
+        child, copy = self.__copy_child_of_parent(parent, c_name)
+        if child is not None:
+            for c in child.children:
+                copy.add_child(self.copy_node_of_parent(child, c.name))
+        return copy
+
     def copy_node(self, child_name):
-        def _copy_branch(parent, c_name):
-            child, copy = self.__copy_child_of_parent(parent, c_name)
-            if child is not None:
-                for c in child.children:
-                    copy.add_child(_copy_branch(child, c.name))
-            return copy
-        return _copy_branch(self.current_node, child_name)
+        return self.copy_node_of_parent(self.current_node, child_name)
 
     def remove_node(self, child_name):
         for child in self.current_node.children:
@@ -228,7 +241,31 @@ class DirectoryTree:
         self.insert_node_into_parent(new_parent, node_to_insert)
 
 
+    def find_node(self, path):
+        pointer = self.root
+        buff = os.path.split(path)
+        for file_name in buff[1:]:
+            pointer = self.find_child_of_parent(pointer, file_name)
+        return pointer
 
+    def go_to_node(self, path):
+        under_root = []
+        while len(path) > 0:
+            h, t = os.path.split(path)
+            path = h
+            if t == self.root.name:
+                self.current_node = self.root
+                break
+            else:
+                under_root.append(t)
+
+        #under_root.reverse()
+        while len(under_root) > 0:
+            self.current_node = self.find_child(under_root.pop())
+        return self.current_node
+
+        # self.current_node = self.find_node(under_root)
+        # return self.current_node
 
 
     def go_to_child(self, child_name):
@@ -260,5 +297,5 @@ class DirectoryTree:
         for child in node.children:
             self.print_tree(child, indent+2)
 
-tree = DirectoryTree("C:/felt_WK_app/mockup_files")
-tree.print_tree()
+# tree = DirectoryTree("C:/felt_WK_app/mockup_files")
+# tree.print_tree()

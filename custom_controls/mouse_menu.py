@@ -108,9 +108,11 @@ class MouseMenuExplorerBackground(MouseMenu):
     def __init__(self, **kwargs):
         self.new_folder_button = ft.TextButton("New Folder")
         self.paste_button = ft.TextButton("Paste")
+        self.select_all = ft.TextButton("Select All")
         super().__init__(menu_buttons = [
             self.new_folder_button,
             self.paste_button,
+            self.select_all,
         ],
                          **kwargs)
         self.visible = False
@@ -121,5 +123,5 @@ class MouseMenuExplorerBackground(MouseMenu):
     def set_on_paste(self, on_paste):
         self.paste_button.on_click = self.wrap_event_call_add_menu_data(on_paste)
 
-
-#class MouseMenuEvent(ft.):
+    def set_on_select_all(self, on_select_all):
+        self.select_all.on_click = self.wrap_event_call_add_menu_data(on_select_all)

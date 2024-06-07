@@ -8,42 +8,54 @@ from flet_core.drag_target import DragTargetEvent
 class Explorer(ft.Column):
     def __init__(self, root_path, elems_pr_row = 5, **kwargs):
         super().__init__(**kwargs)
-        self.dir_tree = DirectoryTree(root_path)
+        self.root_path = root_path
 
-        self.elems_pr_row = elems_pr_row
+        self.grid: ft.Column
         self.icon_size = 200
+        self.elems_pr_row = elems_pr_row
 
-        self.top_menu_size = self.icon_size*self.elems_pr_row
-        self.top_menu_txt = None
-        self.top_menu = self.mk_top_menu()
-        self.controls.append(self.top_menu)
+        self.top_menu: ft.Row
+        self.top_menu_size = self.icon_size * self.elems_pr_row
+        self.top_menu_txt: ft.TextField
+        self.search_enabled = False
+        self.searching = False
 
-        self.mouse_menu_exp_elem = MouseMenuExplorerElement()
-        self.mouse_menu_exp_elem.set_on_open(self.open_button_clicked)
-        self.mouse_menu_exp_elem.set_on_delete(self.delete_button_clicked)
-        self.mouse_menu_exp_elem.set_on_copy(self.copy_button_clicked)
-        self.mouse_menu_exp_elem.set_on_paste(self.paste_into_button_clicked)
-        self.mouse_menu_exp_elem.set_on_cut(self.cut_button_clicked)
-        self.mouse_menu_exp_elem.set_on_rename_enable(self.rename_button_clicked)
+        self.overlay: list[ft.Control]
+        self.mouse_menu_exp_elem: MouseMenuExplorerElement
+        self.mouse_menu_exp_bg: MouseMenuExplorerBackground
+        self.bg_unreachable = False
+        self.bg_reachable = False
 
-        self.mouse_menu_exp_bg = MouseMenuExplorerBackground()
-        self.mouse_menu_exp_bg.set_on_new_folder(self.new_folder_button_clicked)
-        self.mouse_menu_exp_bg.set_on_paste(self.paste_here_button_clicked)
-
-        self.overlay = [self.mouse_menu_exp_elem, self.mouse_menu_exp_bg]
+        self.main_dir_tree: DirectoryTree
+        self.curr_dir_tree: DirectoryTree
+        self.search_dir_tree: DirectoryTree
 
         self.clipboard: list[DirectoryTreeElement] = []
         self.selected: list[DirectoryTreeElement] = []
         self.has_cut = False
-        self.bg_unreachable = False
-        self.bg_reachable = False
 
-
-
+        self.explorer_controls = []
+        #self.explorer_overlay:
 
         self.init_explorer()
 
     # Element manipulation
+    def highlight_element_names(self, files: list[DirectoryTreeElement]):
+        for file in files:
+            file.exp_elem.label.highlight_all()
+
+    def highlight_fraze_in_element_names(self, files: list[DirectoryTreeElement],
+                                     fraze: str):
+        try:
+            for file in files:
+                file.exp_elem.label.highlight(fraze)
+        except:
+            print("smths wrong")
+
+    def unhighlight_element_names(self, files: list[DirectoryTreeElement]):
+        for file in files:
+            file.exp_elem.label.unhighlight_all()
+
 
     def select_element(self, file: DirectoryTreeElement):
         file.switch_to_selected_mode()
@@ -63,18 +75,18 @@ class Explorer(ft.Column):
 
 
     def move_to_parent_dir(self, e):
-        if self.dir_tree.current_node.parent is not None:
-            self.dir_tree.go_to_parent()
+        if self.curr_dir_tree.current_node.parent is not None:
+            self.curr_dir_tree.go_to_parent()
             self.refresh()
             self.update()
 
     def create_new_folder_element(self):
         new_folder = DirectoryTreeElement(name="New Folder",
                                           file_type=FileTypes.DIRECTORY,
-                                          path=self.dir_tree.current_node.path,
-                                          depth=self.dir_tree.current_node.depth+1)
-        new_folder.name = self.make_copy_name(self.dir_tree.current_node, new_folder.name)
-        self.dir_tree.insert_node_into_parent(self.dir_tree.current_node,new_folder)
+                                          path=self.curr_dir_tree.current_node.path,
+                                          depth=self.curr_dir_tree.current_node.depth + 1)
+        new_folder.name = self.make_copy_name(self.curr_dir_tree.current_node, new_folder.name)
+        self.curr_dir_tree.insert_node_into_parent(self.curr_dir_tree.current_node, new_folder)
         self.refresh()
         self.update()
         # new_folder.exp_elem.enable_label_edit(
@@ -92,13 +104,13 @@ class Explorer(ft.Column):
 
     def delete_elements(self, files: list[DirectoryTreeElement]):
         for f in files:
-            self.dir_tree.remove_node(f.name)
+            self.curr_dir_tree.remove_node(f.name)
         self.refresh()
         self.update()
 
     def open_element(self, file: DirectoryTreeElement):
         if file.file_type == FileTypes.DIRECTORY:
-            self.dir_tree.go_to_child(file.name)
+            self.curr_dir_tree.go_to_child(file.name)
             self.refresh()
             self.update()
 
@@ -115,7 +127,7 @@ class Explorer(ft.Column):
         if not self.clipboard_empty():
             for f in self.clipboard: f.switch_to_default_mode()
         for f in files:
-            self.clipboard.append(self.dir_tree.copy_node(f.name))
+            self.clipboard.append(self.curr_dir_tree.copy_node(f.name))
         self.mouse_menu_exp_elem.hide()
 
     def paste_to_curr_dir(self, _e):
@@ -123,13 +135,13 @@ class Explorer(ft.Column):
             return
         #if self.clipboard.is_cut:
         for f in self.clipboard:
-            if f.parent.name == self.dir_tree.current_node.name:
+            if f.parent.name == self.curr_dir_tree.current_node.name:
                 continue
-            new_name = self.make_copy_name(self.dir_tree.current_node, f.name)
-            self.dir_tree.remove_node_of_parent(f.parent, f.name)
+            new_name = self.make_copy_name(self.curr_dir_tree.current_node, f.name)
+            self.curr_dir_tree.remove_node_of_parent(f.parent, f.name)
             f.name = new_name
-            self.dir_tree.insert_node(self.dir_tree.current_node.name,f)
-        print("pasted:",self.clipboard, " to: ",  self.dir_tree.current_node.name)
+            self.curr_dir_tree.insert_node(self.curr_dir_tree.current_node.name, f)
+        print("pasted:", self.clipboard, " to: ", self.curr_dir_tree.current_node.name)
         self.clipboard = []
         self.mouse_menu_exp_elem.hide()
         self.refresh()
@@ -147,9 +159,9 @@ class Explorer(ft.Column):
             if f.parent.name == new_parent_file.name:
                 continue
             new_name = self.make_copy_name(new_parent_file, f.name)
-            self.dir_tree.remove_node_of_parent(f.parent, f.name)
+            self.curr_dir_tree.remove_node_of_parent(f.parent, f.name)
             f.name = new_name
-            self.dir_tree.insert_node(new_parent_file.name, f)
+            self.curr_dir_tree.insert_node(new_parent_file.name, f)
         self.clipboard = []
         self.mouse_menu_exp_elem.hide()
         self.refresh()
@@ -163,6 +175,11 @@ class Explorer(ft.Column):
 
     def new_folder_button_clicked(self, e):
         self.create_new_folder_element()
+        self.mouse_menu_exp_bg.hide()
+
+    def select_all_button_clicked(self, e):
+        for f in self.curr_dir_tree.current_node.children:
+            self.select_element(f)
         self.mouse_menu_exp_bg.hide()
 
     # Mouse background menu events end
@@ -199,7 +216,7 @@ class Explorer(ft.Column):
         file.exp_elem.disable_name_edit()
         if new_name == "" or new_name == file.name:
             return
-        self.rename_element(file, self.make_copy_name(self.dir_tree.current_node, new_name))
+        self.rename_element(file, self.make_copy_name(self.curr_dir_tree.current_node, new_name))
 
     def element_right_clicked(self, e:ft.TapEvent, file:DirectoryTreeElement):
         self.mouse_menu_exp_elem.data = file
@@ -225,8 +242,8 @@ class Explorer(ft.Column):
         dragged_file = self.currently_dragged
         if dragged_file.name == target_file.name:
             return
-        self.dir_tree.insert_node(target_file.name, dragged_file)
-        self.dir_tree.remove_node(dragged_file.name)
+        self.curr_dir_tree.insert_node(target_file.name, dragged_file)
+        self.curr_dir_tree.remove_node(dragged_file.name)
         self.refresh()
         self.update()
 
@@ -250,10 +267,35 @@ class Explorer(ft.Column):
         self.show_mouse_exp_bg(e.global_x, e.global_y)
         self.unselect_all()
 
+    def init_top_menu(self):
+        self.top_menu = self.mk_top_menu()
+        self.top_menu_search_button.on_click = self.search_button_clicked
+        self.top_menu_search_cancel_button.on_click = self.search_cancel_button_clicked
+
+    def init_bg_mouse_menu(self):
+        self.mouse_menu_exp_bg = MouseMenuExplorerBackground()
+        self.mouse_menu_exp_bg.set_on_new_folder(self.new_folder_button_clicked)
+        self.mouse_menu_exp_bg.set_on_paste(self.paste_here_button_clicked)
+        self.mouse_menu_exp_bg.set_on_select_all(self.select_all_button_clicked)
+
+    def init_file_mouse_menu(self):
+        self.mouse_menu_exp_elem = MouseMenuExplorerElement()
+        self.mouse_menu_exp_elem.set_on_open(self.open_button_clicked)
+        self.mouse_menu_exp_elem.set_on_delete(self.delete_button_clicked)
+        self.mouse_menu_exp_elem.set_on_copy(self.copy_button_clicked)
+        self.mouse_menu_exp_elem.set_on_paste(self.paste_into_button_clicked)
+        self.mouse_menu_exp_elem.set_on_cut(self.cut_button_clicked)
+        self.mouse_menu_exp_elem.set_on_rename_enable(self.rename_button_clicked)
 
     def init_explorer(self):
-        self.controls = self.controls[:1]
-        self.update_top_menu_txt()
+        self.main_dir_tree: DirectoryTree = DirectoryTree(self.root_path)
+        self.curr_dir_tree: DirectoryTree = self.main_dir_tree
+        self.search_dir_tree: DirectoryTree = self.initialize_search_tree()
+        self.init_bg_mouse_menu()
+        self.init_file_mouse_menu()
+        self.init_top_menu()
+        self.overlay = [self.mouse_menu_exp_elem, self.mouse_menu_exp_bg]
+        self.controls.append(self.top_menu)
         self.controls.append(self.mk_grid())
 
     # Explorer layout
@@ -262,6 +304,7 @@ class Explorer(ft.Column):
         self.controls = self.controls[:1]
         self.update_top_menu_txt()
         self.controls.append(self.mk_grid())
+
 
     def mk_file_button(self, file:DirectoryTreeElement):
         element = ExplorerElement(file, icon_size=self.icon_size)
@@ -283,8 +326,12 @@ class Explorer(ft.Column):
             row.controls.append(self.mk_file_button(file))
         return row
 
+    def insert_grid (self, grid:ft.Column):
+        self.background_gesture.content = grid
+
+
     def mk_grid(self):
-        curr_node_children = self.dir_tree.current_node.children
+        curr_node_children = self.curr_dir_tree.current_node.children
         files_cnt =  len(curr_node_children)
         rows_cnt = files_cnt // self.elems_pr_row
         controls = []
@@ -302,25 +349,42 @@ class Explorer(ft.Column):
 
         self.background_gesture.on_secondary_tap_down = self.background_right_clicked
         self.background_gesture.on_tap_down = self.background_left_clicked
+        self.background_gesture.mouse_cursor = ft.MouseCursor.HELP
 
-        # self.background_gesture.on_pan_start = self.show_selection_area
-        # self.background_gesture.on_pan_end = self.hide_selection_area
-        # self.background_gesture.on_pan_update = self.update_selection_area
 
         return  self.background_gesture
 
     def mk_top_menu(self):
+
         back_button = ft.IconButton(icon = ft.icons.ARROW_BACK,
                                     icon_size=15,
                                     padding=ft.Padding(0, 0, 0, 0),
                                     on_click=self.move_to_parent_dir)
         self.top_menu_txt = ft.TextField(
-            value=self.dir_tree.current_node.path,
+            value=self.curr_dir_tree.current_node.path,
             width=self.top_menu_size,
             content_padding=ft.Padding(0, 0, 0, 0),
             prefix=back_button,
         )
-        return ft.Row([self.top_menu_txt])
+
+        self.top_menu_search_cancel_button = ft.IconButton(icon=ft.icons.CANCEL,
+                                                           icon_size=20,
+                                                           icon_color="red")
+        self.top_menu_search_button = ft.IconButton(icon=ft.icons.SEARCH,
+                                                    icon_size=20,
+                                                    on_click=self.search_button_clicked)
+
+        self.top_menu_search_bar = ft.TextField(
+            label = "Search:",
+            value="",
+            width=300,
+            content_padding=ft.Padding(0, 0, 0, 0),
+            prefix= self.top_menu_search_button,
+            suffix= self.top_menu_search_cancel_button
+
+        )
+
+        return ft.Row([self.top_menu_txt, self.top_menu_search_bar])
     # Explorer layout end
 
     # Mouse menus manipulation
@@ -342,7 +406,7 @@ class Explorer(ft.Column):
     # Mouse menus manipulation end
 
     def update_top_menu_txt(self):
-        self.top_menu_txt.value = self.dir_tree.current_node.path
+        self.top_menu_txt.value = self.curr_dir_tree.current_node.path
 
     def make_copy_name(self, new_dir, curr_name):
         i = 0
@@ -355,6 +419,65 @@ class Explorer(ft.Column):
     def clipboard_empty(self):
         return len(self.clipboard) == 0
 
+    def search_files(self, parent_file: DirectoryTreeElement,
+                     search_str:str):
+        matching_files = []
+        for file in parent_file.children:
+            if search_str.lower() in file.name.lower():
+                #print("hit:", file.name)
+                matching_files.append(file)
+            matching_files = matching_files + self.search_files(file, search_str)
+        return matching_files
+
+    def initialize_search_tree(self):
+        search_tree_root = DirectoryTreeElement(name="Search Results",
+                                                file_type=FileTypes.DIRECTORY,
+                                                path="Search Results",
+                                                depth=0)
+
+        return DirectoryTree(root_file=search_tree_root)
+
+    def populate_search_tree(self, found_files: list[DirectoryTreeElement]):
+        files = [self.main_dir_tree.copy_node_of_parent(f.parent,f.name) for f in found_files]
+
+        self.search_dir_tree = self.initialize_search_tree()
+        for f in files:
+            f.data["org_path"] = f.path
+            self.search_dir_tree.insert_node("Search Results", f)
+        self.curr_dir_tree.go_to_root()
 
 
+    # Top menu events
+    def search_button_clicked(self, _e):
+        if self.searching: return
+        print("STARTED SEARCH")
+        self.searching = True
 
+        search_fraze = self.top_menu_search_bar.value
+        if search_fraze == "":
+            self.search_cancel_button_clicked(_e)
+            self.searching = False
+            return
+        found_files = self.search_files(self.main_dir_tree.current_node, search_fraze)
+        self.search_dir_tree = self.initialize_search_tree()
+        self.populate_search_tree(found_files)
+        self.curr_dir_tree = self.search_dir_tree
+        self.refresh()
+        self.highlight_fraze_in_element_names(
+            self.curr_dir_tree.current_node.children,
+            self.top_menu_search_bar.value)
+        self.update()
+        self.search_enabled = True
+        self.searching = False
+        print("FINISHED SEARCH")
+
+    def search_cancel_button_clicked(self,_e):
+        if self.searching: return
+        self.search_enabled = False
+        self.curr_dir_tree = self.main_dir_tree
+        if self.search_dir_tree.current_node.depth != 0:
+            self.curr_dir_tree.go_to_node(self.search_dir_tree.current_node.data["org_path"])
+        #self.search_dir_tree = None
+        self.top_menu_search_bar.value = ""
+        self.refresh()
+        self.update()

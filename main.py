@@ -45,13 +45,11 @@ def main(page: ft.Page):
     # page.add(ft.Icon(name=ft.icons.SMART_BUTTON, size=100))
     # page.add(ft.Icon(name=ft.icons.SMART_BUTTON, size=100))
 
-    from custom_controls.explorer.explorer import Explorer
-    explorer = Explorer(utils.CURR_DIR + "/mockup_files")
+
     #page.add(explorer)
 
 
-    for menu in explorer.overlay:
-        page.overlay.append(menu)
+
 
 
 
@@ -110,12 +108,26 @@ def main(page: ft.Page):
     stack.controls=[gesture,selectable]
     stack.controls = [gesture, selectable]
 
-
+    from custom_controls.explorer.explorer import Explorer
+    explorer = Explorer(root_path="C:/felt_WK_app")  # (utils.CURR_DIR + "/mockup_files")
 
     page.add(explorer)
 
+    from custom_controls.buttons.text_highlightable import TextHighlightable
+    high_txt = TextHighlightable(value="Hello world", size=20)
+    page.add(high_txt)
+    high_txt.highlight("h")
+
+    # for name in os.listdir("C:/"):
+    #     print(name)
+
+
+    for menu in explorer.overlay:
+        page.overlay.append(menu)
 
     page.update()
+
+    #print(os.path.split(CURR_DIR))
 
 
 
