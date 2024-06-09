@@ -85,12 +85,18 @@ class ExplorerElement(ft.Column):
 
 
 
-    def cut(self):
-        self.icon_labeled.icon.color = self.icon_cut_color
+    def cut(self, on: bool):
+        if on:
+            self.icon_labeled.icon.color = self.icon_cut_color
+        else:
+            self.icon_labeled.icon.color = self.default_icon_color
         self.update()
 
-    def selected(self):
-        self.card.color = self.selected_color
+    def selected(self, on: bool):
+        if on:
+            self.card.color = self.selected_color
+        else:
+            self.card.color = self.default_color
         self.update()
 
     def default(self):

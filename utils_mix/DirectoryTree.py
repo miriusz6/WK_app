@@ -57,19 +57,21 @@ class DirectoryTreeElement:
         child.depth = None
         child.path = None
 
-    def switch_to_cut_mode(self):
-        self.is_cut = True
-        self.is_selected = False
-        self.exp_elem.cut()
+# CHANGE SO DEFAULT DOESNT EXCLUDE CUT
+
+    def cut_mode(self, cut: bool):
+        self.is_cut = cut
+        #self.is_selected = False
+        self.exp_elem.cut(cut)
 
 
-    def switch_to_selected_mode(self):
-        self.is_selected = True
-        self.is_cut = False
-        self.exp_elem.selected()
+    def selected_mode(self, selected: bool):
+        self.is_selected = selected
+        #self.is_cut = False
+        self.exp_elem.selected(selected)
 
 
-    def switch_to_default_mode(self):
+    def default_mode(self):
         self.is_cut = False
         self.is_selected = False
         self.exp_elem.default()
@@ -201,6 +203,7 @@ class DirectoryTree:
                                     extension=child.extension,
                                     path=child.path,
                                     depth=child.depth)
+        copy.parent = parent
         return child,copy
 
     def copy_node_of_parent(self,parent, c_name):
@@ -208,6 +211,7 @@ class DirectoryTree:
         if child is not None:
             for c in child.children:
                 copy.add_child(self.copy_node_of_parent(child, c.name))
+        copy.data["original"] = child
         return copy
 
     def copy_node(self, child_name):
@@ -248,7 +252,11 @@ class DirectoryTree:
             pointer = self.find_child_of_parent(pointer, file_name)
         return pointer
 
-    def go_to_node(self, path):
+    def go_to_node(self, node):
+        self.current_node = node
+        return self.current_node
+
+    def go_to_node_by_path(self, path):
         under_root = []
         while len(path) > 0:
             h, t = os.path.split(path)

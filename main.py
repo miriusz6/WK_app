@@ -125,6 +125,77 @@ def main(page: ft.Page):
     for menu in explorer.overlay:
         page.overlay.append(menu)
 
+
+    txt = ft.Text(str(page.controls), size=40)
+
+
+    gest = ft.GestureDetector(txt)
+    a = lambda _e: print("A")
+    b = lambda _e: print("B")
+
+
+
+    gest.on_tap = a
+
+    def sm(_e, a = gest.on_tap):
+
+        a(_e)
+        print("B")
+    gest.on_tap = lambda  _e: sm(_e)
+    #gest.on_tap = lambda _e: print("C")
+    #page.add(gest)
+
+
+    from utils_mix.DirectoryTree import DirectoryTreeElement
+    from utils_mix.DirectoryTree import ExplorerElement
+    from utils_mix.DirectoryTree import FileTypes
+    f = DirectoryTreeElement(name="C:/felt_WK_app", file_type=FileTypes.DIRECTORY,
+                             path  = "path",
+                            depth= 0,
+                            extension = None,
+                             explorer_element= None
+                             )
+
+
+
+    exp_elem = ExplorerElement(file=f, icon_size=200)
+
+    exp_elem.gesture.on_tap_down = lambda _e: [print("JELLO"), exp_elem.selected(True)]
+    exp_elem.gesture.on_double_tap = lambda _e:  [ print("JELLO 2"), exp_elem.selected(False)]
+    exp_elem.gesture.hover_interval = 0
+
+    selected = False
+    # ib = ft.IconButton(ft.icons.FAVORITE, icon_size=200,
+    #                    on_click= lambda _e: [print ("no JELLO"),exp_elem.selected(True)],
+    #                    content= exp_elem
+    #                    )
+
+    drag = ft.Draggable(group="exp", content=exp_elem.gesture)
+
+
+    def print_info(*args, **kwargs):
+        print(args)
+        print(kwargs)
+
+    drag2 = ft.Draggable(group="exp", content=ft.IconButton(ft.icons.FAVORITE, icon_size=200))
+
+    exp_elem.gesture.on_vertical_drag_start = lambda _e: print_info(_e)
+
+    i = ft.Icon(ft.icons.FAVORITE, size=200)
+    work_g = ft.GestureDetector( i,
+                                on_vertical_drag_update= lambda _e: print("HL"),
+                                on_horizontal_drag_update= lambda _e: print("HL"),
+                                )
+    d = ft.Draggable(group="exp", content=i)
+
+    page.add( ft.Stack([ ft.TransparentPointer(d),work_g]))
+
+    page.add(drag)
+
+
+    #page.add(exp_elem)
+
+
     page.update()
 
     #print(os.path.split(CURR_DIR))
