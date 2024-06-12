@@ -26,8 +26,8 @@ class DropBoxTreeElement:
         # if self.extension is not None:
         #     self.full_name += self.extension
         self.full_path = self.path
-        if self.extension is not None:
-            self.full_path += self.extension
+        # if self.extension is not None:
+        #     self.full_path += self.extension
 
 
     def add_child(self, child):
@@ -449,6 +449,38 @@ class DropBoxTree:
         nodes.append(node)
         for child in node.children:
             self.__get_all_nodes(child, nodes)
+
+    def compare(self, other_tree):
+        return self.compare_nodes(self.root, other_tree.root)
+    def compare_nodes(self, target_node, other_node):
+        to_delete = []
+        to_download = []
+        if target_node.full_name.lower() != other_node.full_name.lower():
+            return [target_node], []
+
+        target_children = target_node.children.copy()
+        other_children = other_node.children.copy()
+        other_children.reverse()
+
+        for target in target_node.children:
+            found = False
+            for other in other_node.children:
+                x = target.full_name
+                y = other.full_name.lower()
+                if target.full_name.lower() == other.full_name.lower():
+                    #print("found", target.full_path, " == ", other.full_path)
+                    found = True
+                    to_del, to_down = self.compare_nodes(target, other)
+                    to_delete.extend(to_del)
+                    to_download.extend(to_down)
+                    other_children.pop(other_children.index(other))
+                    target_children.pop(target_children.index(target))
+                    break
+            # if not found:
+            #     to_download.append(target)
+        to_delete.extend(other_children)
+        to_download.extend(target_children)
+        return to_delete, to_download
 
 
 

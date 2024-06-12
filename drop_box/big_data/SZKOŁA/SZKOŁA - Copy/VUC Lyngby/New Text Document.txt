@@ -1,0 +1,5 @@
+Biologi 10,5
+Dansk 10,1
+Engelsk 11,5
+Psykologi 6,5
+Religion 6,5

@@ -179,33 +179,46 @@ class DB:
 
 
     def scan_local(self):
+        print("Scanning local:")
         local_tree = DirectoryTree(path_to_root=self.local_path)
         online_tree = DropBoxTree(self.get_all_files_meta())
-        delete, down = self.__scan_local_node(online_tree.root, local_tree.root)
+        delete, down = online_tree.compare(local_tree)
         print("to delete:",delete,"\n to download:",down)
         return
+
+    def scan_online(self):
+        print("Scanning online")
+        local_tree = DirectoryTree(path_to_root=self.local_path)
+        online_tree = DropBoxTree(self.get_all_files_meta())
+        delete, down = local_tree.compare(online_tree)
+        print("to delete:",delete,"\n to download:",down)
 
     def __scan_local_node(self, target_node, other_node):
         to_delete = []
         to_download = []
-        if target_node.full_name != other_node.full_name.lower():
-            return ([target_node],[])
+        if target_node.full_name.lower() != other_node.full_name.lower():
+            return [target_node], []
 
         target_children = target_node.children.copy()
         other_children = other_node.children.copy()
+        other_children.reverse()
 
-        for target in target_children:
+        for target in target_node.children:
             found = False
-            for other in other_children:
-                if target.full_name == other.full_name.lower():
+            for other in other_node.children:
+                x = target.full_name
+                y = other.full_name.lower()
+                if target.full_name.lower() == other.full_name.lower():
+                    print("found",target.full_path," == ", other.full_path)
                     found = True
-                    to_delete, to_download = self.__scan_local_node(target, other)
-                    to_delete.extend(to_delete)
-                    to_download.extend(to_download)
+                    to_del, to_down = self.__scan_local_node(target, other)
+                    to_delete.extend(to_del)
+                    to_download.extend(to_down)
                     other_children.pop(other_children.index(other))
+                    target_children.pop(target_children.index(target))
                     break
-            if not found:
-                to_download.append(target)
+            # if not found:
+            #     to_download.append(target)
         to_delete.extend(other_children)
         to_download.extend(target_children)
         return to_delete, to_download
@@ -409,7 +422,19 @@ class DB:
 
 db = DB()
 
+
+t1 = time.time()
 db.scan_local()
+t2= time.time()
+db.scan_online()
+t3 = time.time()
+
+# no big data:
+# time to scan local:  0.6142063140869141
+# time to scan online:  0.569300651550293
+
+print("time to scan local: ",t2-t1)
+print("time to scan online: ",t3-t2)
 
 from drop_box.DropBoxTree import DropBoxTree
 
