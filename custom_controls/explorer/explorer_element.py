@@ -4,11 +4,16 @@ from custom_controls.buttons.label_placement import LabelPlacement
 from utils_mix.DirectoryTree import FileTypes
 from custom_controls.buttons.text_highlightable import TextHighlightable
 from typing import Callable
-class ExplorerElement(ft.Column):
+class ExplorerElement(ft.Container):
     def __init__(self,file, icon_size=50, **kwargs):
         super().__init__(**kwargs)
         self.icon_size = icon_size
         self.file = file
+
+        #self.expand = True
+
+        self.height = icon_size+60
+        self.width = icon_size
 
         name = file.name
 
@@ -24,11 +29,11 @@ class ExplorerElement(ft.Column):
         self.icon_labeled = IconLabeled(label=self.label,
                                         icon=ft.Icon(icon_name, size=icon_size),
                                         label_placement=LabelPlacement.BOTTOM)
-        self.icon_labeled.run_spacing = 0
-        self.icon_labeled.tight = True
-        self.expand_loose = False
+        #self.icon_labeled.run_spacing = 0
+        #self.icon_labeled.tight = True
+        #self.expand_loose = False
 
-        self.icon_labeled.alignment = ft.MainAxisAlignment.CENTER
+        #self.icon_labeled.alignment = ft.MainAxisAlignment.CENTER
 
 
 
@@ -55,8 +60,9 @@ class ExplorerElement(ft.Column):
             self.drag_target = None
             self.card = ft.Card(self.draggable)
 
-        self.controls = [self.card]
-        self.spacing = 10
+        self.content = self.card
+
+        #self.spacing = 10
 
         self.default_icon_color = self.icon_labeled.icon.color
         self.icon_cut_color = ft.colors.with_opacity(0.4, ft.colors.PRIMARY)

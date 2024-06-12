@@ -19,10 +19,20 @@ class DirectoryTreeElement:
         self.extension = extension
         self.file_type = file_type
         self.path = path
+        self.relative_path = path
         self.depth = depth
         self.exp_elem = explorer_element
         self.is_cut = False
         self.is_selected = False
+        self.full_name = self.name
+        if self.extension is not None:
+            self.full_name += self.extension
+        self.full_path = self.path
+        if self.extension is not None:
+            self.full_path += self.extension
+
+
+
 
     def add_child(self, child):
         self.children.append(child)
@@ -56,8 +66,6 @@ class DirectoryTreeElement:
         child.parent = None
         child.depth = None
         child.path = None
-
-# CHANGE SO DEFAULT DOESNT EXCLUDE CUT
 
     def cut_mode(self, cut: bool):
         self.is_cut = cut
@@ -100,9 +108,10 @@ class DirectoryTree:
         self.__populate_tree(path_to_root)
         self.current_node = self.root
 
+
+
     def __populate_tree(self, root_path):
         r_p = os.path.split(root_path)[-1]
-        print("SPLITTED:",r_p)
 
         self.root = DirectoryTreeElement(
             #name=root_path.split('/')[-1],
@@ -304,6 +313,18 @@ class DirectoryTree:
         print("  "*indent, node)
         for child in node.children:
             self.print_tree(child, indent+2)
+
+    def get_all_nodes(self):
+        nodes = []
+        self.__get_all_nodes(self.root, nodes)
+        return nodes
+
+    def __get_all_nodes(self, node, nodes):
+        nodes.append(node)
+        for child in node.children:
+            self.__get_all_nodes(child, nodes)
+
+
 
 # tree = DirectoryTree("C:/felt_WK_app/mockup_files")
 # tree.print_tree()

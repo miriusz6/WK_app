@@ -2,7 +2,7 @@ import flet as ft
 
 from custom_controls.buttons.label_placement import LabelPlacement
 
-class IconLabeled(ft.Column):
+class IconLabeled(ft.Container):
     def __init__(self, label: ft.Text,
                  icon: ft.Icon = None,
                  label_placement: LabelPlacement = LabelPlacement.BOTTOM,
@@ -17,7 +17,7 @@ class IconLabeled(ft.Column):
         self.icon = icon
         self.label = label
 
-        self.alignment = ft.MainAxisAlignment.CENTER
+       #self.alignment = ft.MainAxisAlignment.CENTER
 
         self.icon.padding = ft.Padding(0, 0, 0, 0)
         self.label.width = self.icon.size
@@ -30,15 +30,15 @@ class IconLabeled(ft.Column):
             button_child = self.icon
 
         if self.label_placement == LabelPlacement.TOP:
-            self.controls = [self.label, self.editable_label, button_child]
+            self.content = ft.Column([self.label, self.editable_label, button_child])
         elif self.label_placement == LabelPlacement.BOTTOM:
-            self.controls = [button_child, self.editable_label, self.label]
+            self.content = ft.Column([button_child, self.editable_label, self.label])
         elif self.label_placement == LabelPlacement.LEFT:
-            self.controls = [ft.Row([self.editable_label, self.label, button_child],
-                                    alignment=ft.MainAxisAlignment.CENTER)]
+            self.content = ft.Row([self.editable_label, self.label, button_child],
+                                    alignment=ft.MainAxisAlignment.CENTER)
         elif self.label_placement == LabelPlacement.RIGHT:
-            self.controls = [ft.Row([button_child, self.label, self.editable_label],
-                                    alignment=ft.MainAxisAlignment.CENTER)]
+            self.content = ft.Row([button_child, self.label, self.editable_label],
+                                    alignment=ft.MainAxisAlignment.CENTER)
         self.editable_label.visible = False
         self._on_new_label_txt_submit = lambda _e: print("No on_new_label_txt_submit set")
 

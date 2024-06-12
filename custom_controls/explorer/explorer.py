@@ -10,9 +10,16 @@ from custom_controls.explorer.explorer_grid import ExplorerGrid
 
 
 
-class Explorer(ft.Column):
+class Explorer(ft.Container):
     def __init__(self, root_path, **kwargs):
         super().__init__(**kwargs)
+
+        # NEW
+        #self.width = 1000
+        #self.height = 1000
+        self.expand = True
+        self.expand_loose = True
+
         self.root_path = root_path
 
         self.search_enabled = False
@@ -40,8 +47,28 @@ class Explorer(ft.Column):
         self.overlay = [self.mouse_menu_exp_elem, self.mouse_menu_exp_bg]
         self.grid = self.init_grid()
         # change later
-        self.controls.append(self.top_menu)
-        self.controls.append(self.grid)
+        # self.controls.append(self.top_menu)
+        # self.controls.append(self.grid)
+        self.expand = True
+        self.bgcolor = ft.colors.BLUE_GREY_300
+        #self.content = ft.Column([self.top_menu, self.grid])
+
+        self.content = ft.Column([ft.Row([self.top_menu],
+                                         spacing=0, run_spacing=0, tight=True,
+                                         alignment=ft.MainAxisAlignment.CENTER
+                                         ),
+
+                                  ft.Row([self.grid],
+                                         expand=True,
+                                         alignment=ft.MainAxisAlignment.CENTER
+                                         ),
+                                  ],
+                                 spacing=0, run_spacing=0, tight=True, alignment=ft.MainAxisAlignment.START,
+                                 )
+        # self.content = ft.Column([ ft.Container(ft.Row([self.top_menu])) ,
+        #                            ft.Container(ft.Row([self.grid]))
+        #                            ])
+        #self.controls.append(ft.Container(self.top_menu, self.grid, expand=True))
 
     # Element manipulation
     def highlight_element_names(self, files: list[DirectoryTreeElement]):
